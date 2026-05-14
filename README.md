@@ -141,11 +141,6 @@ Deletes a task by id.
 
 ---
 
-## How to test the API
-
-### Automated tests
-
-Integration tests use **Supertest** against the Express app (no manual server required for tests):
 
 ```bash
 node test/server.test.js
@@ -223,7 +218,7 @@ curl -s -X POST "http://localhost:3000/tasks" \
 2. Create a request collection with base URL `http://localhost:3000`.
 3. For **POST** and **PUT**, set **Body** to **raw** and **JSON**, and include the fields described above.
 4. For **GET /tasks**, use the **Params** tab to add `completed` and/or `order` as query parameters.
-5. Save responses or use **Tests** scripts to assert status codes (200, 201, 400, 404) as needed.
+
 
 ## Project structure (high level)
 
@@ -237,4 +232,3 @@ curl -s -X POST "http://localhost:3000/tasks" \
 | `src/data/` | In-memory task store. |
 | `src/constants/` | Shared constants (e.g. allowed priorities). |
 | `src/utils/` | Helpers (e.g. id parsing). |
-| `test/` | Integration tests. |
