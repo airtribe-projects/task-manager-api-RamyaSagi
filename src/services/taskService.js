@@ -1,20 +1,18 @@
 const taskStore = require("../data/taskStore");
-const { collectTaskBodyErrors } = require("./taskValidation");
+const {
+  collectDisallowedUpdateFieldErrors,
+  collectPartialTaskUpdateErrors,
+} = require("./taskValidation");
 const { filterAndSortTasks } = require("./taskQuery");
 const { PRIORITY_LEVELS, isValidPriority } = require("../constants/priority");
 
-const getBodyValidationResult = (payload) => {
-  const errors = collectTaskBodyErrors(payload);
+const getPartialUpdateValidationResult = (payload) => {
+  const errors = collectPartialTaskUpdateErrors(payload);
   if (errors.length > 0) {
     return { validationErrors: errors };
   }
   return null;
 };
-
-const resolvePriorityForCreate = (payload) =>
-  payload.priority !== undefined && payload.priority !== null
-    ? payload.priority
-    : "medium";
 
 const getTasksWithFilters = (query) =>
   filterAndSortTasks(taskStore.getAllTasks(), query);
@@ -36,25 +34,22 @@ const getAllTasks = () => taskStore.getAllTasks();
 const getTaskById = (id) => taskStore.getTaskById(id);
 
 const createTask = (payload) => {
-  const invalid = getBodyValidationResult(payload);
-  if (invalid) {
-    return invalid;
+  if (payload !== null && payload !== undefined && typeof payload === "object" && !Array.isArray(payload)) {
+    if (payload.id !== undefined && !Number.isInteger(payload.id)) {
+      return { message: "Optional id must be an integer" };
+    }
+
+    if (payload.id !== undefined && taskStore.getTaskById(payload.id)) {
+      return { message: "Task id already exists" };
+    }
   }
 
-  if (payload.id !== undefined && !Number.isInteger(payload.id)) {
-    return { message: "Optional id must be an integer" };
+  const result = taskStore.createTask(payload);
+  if (!result.ok) {
+    return { validationErrors: result.errors };
   }
 
-  if (payload.id !== undefined && taskStore.getTaskById(payload.id)) {
-    return { message: "Task id already exists" };
-  }
-
-  const taskToPersist = {
-    ...payload,
-    priority: resolvePriorityForCreate(payload),
-  };
-
-  return { task: taskStore.createTask(taskToPersist) };
+  return { task: result.task };
 };
 
 const updateTaskById = (id, payload) => {
@@ -63,15 +58,20 @@ const updateTaskById = (id, payload) => {
     return { notFound: true };
   }
 
-  const invalid = getBodyValidationResult(payload);
+  const disallowed = collectDisallowedUpdateFieldErrors(payload);
+  if (disallowed.length > 0) {
+    return { validationErrors: disallowed };
+  }
+
+  const invalid = getPartialUpdateValidationResult(payload);
   if (invalid) {
     return invalid;
   }
 
   const merged = {
-    title: payload.title,
-    description: payload.description,
-    completed: payload.completed,
+    title: payload.title !== undefined ? payload.title : existing.title,
+    description: payload.description !== undefined ? payload.description : existing.description,
+    completed: payload.completed !== undefined ? payload.completed : existing.completed,
     priority:
       payload.priority !== undefined && payload.priority !== null
         ? payload.priority
@@ -84,10 +84,10 @@ const updateTaskById = (id, payload) => {
 const deleteTaskById = (id) => {
   const deletedTask = taskStore.deleteTaskById(id);
   if (!deletedTask) {
-    return { notFound: true };
+    return { notFound: true, deleted: false };
   }
 
-  return { task: deletedTask };
+  return { task: deletedTask , deleted: true};
 };
 
 module.exports = {

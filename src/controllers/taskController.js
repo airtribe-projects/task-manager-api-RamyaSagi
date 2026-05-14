@@ -42,11 +42,14 @@ const getTaskById = (req, res) => {
 
 const createTask = (req, res) => {
   const result = taskService.createTask(req.body);
-  if (result.validationErrors) {
-    return sendValidationError(res, result.validationErrors);
-  }
-  if (result.message) {
-    return sendValidationError(res, [result.message]);
+  const errors =
+    result.validationErrors?.length > 0
+      ? result.validationErrors
+      : result.message
+        ? [result.message]
+        : null;
+  if (errors) {
+    return sendValidationError(res, errors);
   }
 
   return res.status(201).json(result.task);
@@ -83,7 +86,7 @@ const deleteTaskById = (req, res) => {
     return res.status(404).json({ message: "Task not found" });
   }
 
-  return res.status(200).json(result.task);
+  return res.status(204).json(result.task);
 };
 
 module.exports = {
