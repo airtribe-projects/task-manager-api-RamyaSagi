@@ -1,0 +1,101 @@
+const taskStore = require("../data/taskStore");
+const {
+  collectDisallowedUpdateFieldErrors,
+  collectPartialTaskUpdateErrors,
+} = require("./taskValidation");
+const { filterAndSortTasks } = require("./taskQuery");
+const { PRIORITY_LEVELS, isValidPriority } = require("../constants/priority");
+
+const getPartialUpdateValidationResult = (payload) => {
+  const errors = collectPartialTaskUpdateErrors(payload);
+  if (errors.length > 0) {
+    return { validationErrors: errors };
+  }
+  return null;
+};
+
+const getTasksWithFilters = (query) =>
+  filterAndSortTasks(taskStore.getAllTasks(), query);
+
+const getTasksByPriority = (level) => {
+  const normalized = String(level ?? "").trim().toLowerCase();
+  if (!isValidPriority(normalized)) {
+    return {
+      validationErrors: [`priority level must be one of: ${PRIORITY_LEVELS.join(", ")}`],
+    };
+  }
+
+  const matching = taskStore.getAllTasks().filter((task) => task.priority === normalized);
+  return filterAndSortTasks(matching, {});
+};
+
+const getAllTasks = () => taskStore.getAllTasks();
+
+const getTaskById = (id) => taskStore.getTaskById(id);
+
+const createTask = (payload) => {
+  if (payload !== null && payload !== undefined && typeof payload === "object" && !Array.isArray(payload)) {
+    if (payload.id !== undefined && !Number.isInteger(payload.id)) {
+      return { validationErrors: ["Optional id must be an integer"] };
+    }
+
+    if (payload.id !== undefined && taskStore.getTaskById(payload.id)) {
+      return { validationErrors: ["Task id already exists"] };
+    }
+  }
+
+  const result = taskStore.createTask(payload);
+  if (!result.ok) {
+    return { validationErrors: result.errors };
+  }
+
+  return { task: result.task };
+};
+
+const updateTaskById = (id, payload) => {
+  const existing = taskStore.getTaskById(id);
+  if (!existing) {
+    return { notFound: true };
+  }
+
+  const disallowed = collectDisallowedUpdateFieldErrors(payload);
+  if (disallowed.length > 0) {
+    return { validationErrors: disallowed };
+  }
+
+  const invalid = getPartialUpdateValidationResult(payload);
+  if (invalid) {
+    return invalid;
+  }
+
+  const merged = {
+    title: payload.title !== undefined ? payload.title : existing.title,
+    description: payload.description !== undefined ? payload.description : existing.description,
+    completed: payload.completed !== undefined ? payload.completed : existing.completed,
+    priority:
+      payload.priority != null
+        ? payload.priority
+        : existing.priority,
+  };
+
+  return { task: taskStore.updateTaskById(id, merged) };
+};
+
+const deleteTaskById = (id) => {
+  const deletedTask = taskStore.deleteTaskById(id);
+  if (!deletedTask) {
+    return { notFound: true };
+  }
+
+  return { deleted: true };
+};
+
+module.exports = {
+  getTasksWithFilters,
+  getTasksByPriority,
+  getAllTasks,
+  getTaskById,
+  createTask,
+  updateTaskById,
+  deleteTaskById,
+};
