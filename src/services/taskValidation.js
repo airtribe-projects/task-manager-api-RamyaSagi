@@ -69,7 +69,7 @@ const collectPartialTaskUpdateErrors = (payload) => {
   }
 
   if (hasKey("priority")) {
-    if (payload.priority !== null && !isValidPriority(payload.priority)) {
+    if (payload.priority != null && !isValidPriority(payload.priority)) {
       errors.push(`priority must be one of: ${PRIORITY_LEVELS.join(", ")}`);
     }
   }
@@ -100,10 +100,8 @@ const collectTaskBodyErrors = (payload) => {
     errors.push("completed must be a boolean");
   }
 
-  if (payload.priority !== null && !isValidPriority(payload.priority)) {
-    if (!isValidPriority(payload.priority)) {
-      errors.push(`priority must be one of: ${PRIORITY_LEVELS.join(", ")}`);
-    }
+  if (payload.priority != null && !isValidPriority(payload.priority)) {
+    errors.push(`priority must be one of: ${PRIORITY_LEVELS.join(", ")}`);
   }
 
   return errors;

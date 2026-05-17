@@ -36,11 +36,11 @@ const getTaskById = (id) => taskStore.getTaskById(id);
 const createTask = (payload) => {
   if (payload !== null && payload !== undefined && typeof payload === "object" && !Array.isArray(payload)) {
     if (payload.id !== undefined && !Number.isInteger(payload.id)) {
-      return { message: "Optional id must be an integer" };
+      return { validationErrors: ["Optional id must be an integer"] };
     }
 
     if (payload.id !== undefined && taskStore.getTaskById(payload.id)) {
-      return { message: "Task id already exists" };
+      return { validationErrors: ["Task id already exists"] };
     }
   }
 
@@ -73,7 +73,7 @@ const updateTaskById = (id, payload) => {
     description: payload.description !== undefined ? payload.description : existing.description,
     completed: payload.completed !== undefined ? payload.completed : existing.completed,
     priority:
-      payload.priority !== undefined && payload.priority !== null
+      payload.priority != null
         ? payload.priority
         : existing.priority,
   };
@@ -84,10 +84,10 @@ const updateTaskById = (id, payload) => {
 const deleteTaskById = (id) => {
   const deletedTask = taskStore.deleteTaskById(id);
   if (!deletedTask) {
-    return { notFound: true, deleted: false };
+    return { notFound: true };
   }
 
-  return { task: deletedTask , deleted: true};
+  return { deleted: true };
 };
 
 module.exports = {

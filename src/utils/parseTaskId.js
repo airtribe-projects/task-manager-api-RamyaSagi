@@ -6,10 +6,10 @@
 const parseTaskIdParam = (idParam) => {
   const raw = String(idParam ?? "").trim();
 
-  // Rejects leading zeros (e.g., "05") and the number 0 itself.
-  // Only allows "1", "10", "105", etc.
+  // Only allows positive integers: "1", "10", "105", etc.
+  // Rejects empty strings, non-numeric input, leading zeros, and zero itself.
   if (!/^[1-9]\d*$/.test(raw)) {
-    return { ok: false, reason: "Task id must be a positive integer without leading zeros" };
+    return { ok: false, reason: "Task id must be a positive integer without leading zeros and not empty" };
   }
 
   const id = Number(raw);
@@ -22,4 +22,3 @@ const parseTaskIdParam = (idParam) => {
 };
 
 module.exports = { parseTaskIdParam };
-

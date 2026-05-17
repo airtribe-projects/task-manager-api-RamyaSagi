@@ -30,11 +30,11 @@ const createTask = (taskInput) => {
   const errors = [];
 
   if (taskInput === null || taskInput === undefined) {
-    return { ok: false, errors: ["task input is required"] };
+    return { ok: false, errors: ["Request body is required"] };
   }
 
   if (typeof taskInput !== "object" || Array.isArray(taskInput)) {
-    return { ok: false, errors: ["task input must be an object"] };
+    return { ok: false, errors: ["Request body must be a JSON object"] };
   }
 
   const title = typeof taskInput.title === "string" ? taskInput.title.trim() : "";
@@ -97,7 +97,7 @@ const updateTaskById = (id, updates) => {
     description: updates.description !== undefined ? updates.description : current.description,
     completed: updates.completed !== undefined ? updates.completed : current.completed,
     priority:
-      updates.priority !== undefined && updates.priority !== null
+      updates.priority != null
         ? updates.priority
         : current.priority,
     createdAt: current.createdAt,
